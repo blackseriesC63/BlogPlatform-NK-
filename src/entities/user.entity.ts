@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import bcrypt from "bcrypt";
 import { Blog } from "./blog.entity";
+import { Comment } from "./comment.entity";
 
 @Entity()
 @Unique(["email"])
@@ -28,6 +29,9 @@ export class User {
 
   @OneToMany(() => Blog, (blog) => blog.author)
   blogs: Blog[];
+
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 
   async hashPassword(): Promise<void> {
     const salt = await bcrypt.genSalt(10);
