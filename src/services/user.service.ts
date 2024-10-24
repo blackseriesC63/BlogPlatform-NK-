@@ -1,11 +1,11 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
-import { Admin } from "../entities/admin.entity"; // Import the Admin entity
+import { Admin } from "../entities/admin.entity";
 import bcrypt from "bcrypt";
 
 export class UserService {
   private userRepository = AppDataSource.getRepository(User);
-  private adminRepository = AppDataSource.getRepository(Admin); // Initialize the adminRepository
+  private adminRepository = AppDataSource.getRepository(Admin); 
 
   async createUser(
     username: string,

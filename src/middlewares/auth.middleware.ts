@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
+interface UserPayload {
+  userId: number;
+  isAdmin: boolean;
+}
+
 export const authenticateJWT = (
   req: Request,
   res: Response,
@@ -13,21 +18,14 @@ export const authenticateJWT = (
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as {
-      adminId: number;
-      isAdmin: boolean;
-    }; // Adjusted type
-
-    // Store decoded user info in the request
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as UserPayload;
     (req as any).user = decoded;
-
-    // Optional: Check if user is admin
-    if (!decoded.isAdmin) {
-      return res.status(403).json({ message: "Access denied: Admins only" });
-    }
-
     next();
   } catch (error) {
+    console.error("JWT verification error:", error);
     return res.status(403).json({ message: "Invalid Token" });
   }
 };

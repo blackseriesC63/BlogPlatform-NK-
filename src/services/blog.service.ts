@@ -1,10 +1,12 @@
 import { AppDataSource } from "../data-source";
 import { Blog } from "../entities/blog.entity";
 import { User } from "../entities/user.entity";
+import { Comment } from "../entities/comment.entity";
 
 export class BlogService {
   private blogRepository = AppDataSource.getRepository(Blog);
   private userRepository = AppDataSource.getRepository(User);
+  private commentRepository = AppDataSource.getRepository(Comment);
 
   async createBlog(
     title: string,
@@ -14,7 +16,7 @@ export class BlogService {
     const blog = new Blog();
     blog.title = title;
     blog.content = content;
-    blog.authorId = authorId; // Assign the authorId to the blog
+    blog.authorId = authorId;
 
     return await this.blogRepository.save(blog);
   }
@@ -47,5 +49,54 @@ export class BlogService {
 
   async deleteBlog(id: number): Promise<void> {
     await this.blogRepository.delete(id);
+  }
+
+  // Comments:
+
+  // Create comments for blog
+  async createComment(
+    blogId: number,
+    userId: number,
+    content: string
+  ): Promise<Comment> {
+    const comment = new Comment();
+    comment.blogId = blogId;
+    comment.userId = userId;
+    comment.content = content;
+
+    return await this.commentRepository.save(comment);
+  }
+
+  async getCommentsByBlogId(blogId: number): Promise<Comment[]> {
+    return await this.commentRepository.find({ where: { blogId } });
+  }
+
+  async getCommentById(commentId: number): Promise<Comment | null> {
+    return await this.commentRepository.findOne({ where: { id: commentId } });
+  }
+
+  // Get all comments of blog
+  async getAllComments(): Promise<Comment[]> {
+    return await this.commentRepository.find();
+  }
+
+  // Update comment
+  async updateComment(
+    commentId: number,
+    content: string
+  ): Promise<Comment | null> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId },
+    });
+    if (!comment) return null;
+
+    comment.content = content;
+
+    return await this.commentRepository.save(comment);
+  }
+
+  // Delete comment
+  async deleteComment(commentId: number): Promise<void> {
+    await this.commentRepository.delete(commentId);
   }
 }

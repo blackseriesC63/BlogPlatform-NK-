@@ -14,7 +14,10 @@ router.post("/", authenticateJWT, async (req, res) => {
     const newBlog = await blogService.createBlog(title, content, authorId);
     res.status(201).json({ message: "Blog created", blogId: newBlog.id });
   } catch (error) {
-    res.status(500).json({ message: "Error creating blog", error });
+    res.status(500).json({
+      message: "Error creating blog",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 
@@ -26,7 +29,10 @@ router.get("/", async (req, res) => {
     const blogs = await blogService.getAllBlogs(page, limit);
     res.json(blogs);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching blogs", error });
+    res.status(500).json({
+      message: "Error fetching blogs",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 
@@ -41,7 +47,10 @@ router.get("/:id", async (req, res) => {
     }
     res.json(blog);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching blog", error });
+    res.status(500).json({
+      message: "Error fetching blog",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 
@@ -71,7 +80,10 @@ router.put("/:id", authenticateJWT, async (req, res) => {
     );
     res.json({ message: "Blog updated", blog: updatedBlog });
   } catch (error) {
-    res.status(500).json({ message: "Error updating blog", error });
+    res.status(500).json({
+      message: "Error updating blog",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 
@@ -96,8 +108,114 @@ router.delete("/:id", authenticateJWT, async (req, res) => {
     await blogService.deleteBlog(parseInt(id));
     res.json({ message: "Blog deleted" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting blog", error });
+    res.status(500).json({
+      message: "Error deleting blog",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
+
+router.post("/:id/comments", authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+  const userId = (req as any).user.userId; 
+
+  try {
+    const blog = await blogService.getBlogById(parseInt(id));
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    const newComment = await blogService.createComment(
+      parseInt(id),
+      userId,
+      content
+    );
+    res
+      .status(201)
+      .json({ message: "Comment created", commentId: newComment.id });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating comment", error });
+  }
+});
+
+
+// Update Comment
+router.put("/comments/:commentId", authenticateJWT, async (req, res) => {
+  const { commentId } = req.params;
+  const { content } = req.body;
+  const user = (req as any).user;
+  const userId = user.userId;
+
+  try {
+    const comment = await blogService.getCommentById(parseInt(commentId));
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    if (comment.userId !== userId && !user.isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "You are not allowed to edit this comment" });
+    }
+
+    const updatedComment = await blogService.updateComment(parseInt(commentId), content);
+    res.json({ message: "Comment updated", comment: updatedComment });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error updating comment",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+});
+
+// Delete Comment
+router.delete("/comments/:commentId", authenticateJWT, async (req, res) => {
+  const { commentId } = req.params;
+  const user = (req as any).user;
+  const userId = user.userId;
+
+  try {
+    const comment = await blogService.getCommentById(parseInt(commentId));
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    // Check if the user is the owner of the comment or an admin
+    if (comment.userId !== userId && !user.isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "You are not allowed to delete this comment" });
+    }
+
+    await blogService.deleteComment(parseInt(commentId));
+    res.json({ message: "Comment deleted" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error deleting comment",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+});
+
+
+// Get All Comments
+router.get("/:id/comments", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const comments = await blogService.getCommentsByBlogId(parseInt(id));
+    res.json(comments);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching comments",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+});
+
+
+// Delete Comment
+
 
 export default router;

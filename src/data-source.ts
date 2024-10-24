@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { User } from "./entities/user.entity";
 import { Blog } from "./entities/blog.entity";
 import { Admin } from "./entities/admin.entity";
+import { Comment } from "./entities/comment.entity";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [User, Blog, Admin],
+  entities: [User, Blog, Admin, Comment],
 });
 
 export const initializeDataSource = async () => {
